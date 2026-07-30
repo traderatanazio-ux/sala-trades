@@ -137,7 +137,6 @@ export default async function TradesPage({
               <th className="px-4 py-2 font-medium">Ativo</th>
               <th className="px-4 py-2 font-medium">Mercado</th>
               <th className="px-4 py-2 font-medium text-right">R</th>
-              <th className="px-4 py-2 font-medium text-right">Resultado R$</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
               <th className="px-4 py-2 font-medium text-right">Capital Acum.</th>
             </tr>
@@ -167,17 +166,6 @@ export default async function TradesPage({
                   {trade.resultado_r >= 0 ? "+" : ""}
                   {trade.resultado_r.toFixed(1)}R
                 </td>
-                <td
-                  className={`px-4 py-2 text-right ${
-                    trade.resultadoFinanceiro > 0
-                      ? "text-emerald-400"
-                      : trade.resultadoFinanceiro < 0
-                        ? "text-red-400"
-                        : "text-neutral-400"
-                  }`}
-                >
-                  {trade.resultado === "breakeven" ? "—" : formatarMoeda(trade.resultadoFinanceiro)}
-                </td>
                 <td className="px-4 py-2">
                   <span
                     className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide ${TIPO_BADGE_CLASS[trade.resultado]}`}
@@ -192,7 +180,7 @@ export default async function TradesPage({
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">
                   Nenhum trade encontrado com esses filtros.
                 </td>
               </tr>
