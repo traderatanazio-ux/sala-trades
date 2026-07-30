@@ -130,7 +130,7 @@ export default async function TradesPage({
 
       <div className={`overflow-x-auto ${card}`}>
         <table className="w-full text-sm">
-          <thead className="sticky top-[57px] z-[1] bg-neutral-900/95 text-left text-neutral-400 backdrop-blur-sm">
+          <thead className="bg-neutral-900/95 text-left text-neutral-400">
             <tr>
               <th className="px-4 py-2 font-medium">#</th>
               <th className="px-4 py-2 font-medium">Data</th>
