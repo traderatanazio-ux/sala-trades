@@ -170,7 +170,11 @@ export default async function DashboardPage({
   const noPeriodo = filtrarPorPeriodo(enriquecidos, periodo, de, ate);
   const totalPeriodo = noPeriodo.length;
   const vencedoresPeriodo = noPeriodo.filter((t) => t.resultado === "positivo").length;
+  const perdedoresPeriodo = noPeriodo.filter((t) => t.resultado === "negativo").length;
   const taxaAcertoPeriodo = totalPeriodo > 0 ? (vencedoresPeriodo / totalPeriodo) * 100 : 0;
+  const decisivosPeriodo = vencedoresPeriodo + perdedoresPeriodo;
+  const taxaAcertoSemBEPeriodo =
+    decisivosPeriodo > 0 ? (vencedoresPeriodo / decisivosPeriodo) * 100 : 0;
   const distribuicaoPeriodo = RESULTADOS.map((resultado) => ({
     resultado,
     quantidade: noPeriodo.filter((t) => t.resultado === resultado).length,
@@ -219,9 +223,15 @@ export default async function DashboardPage({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total de trades (período)" value={String(totalPeriodo)} tone="info" />
         <StatCard
-          label="Taxa de acerto (período)"
+          label="T.A. — todos os trades"
           value={`${taxaAcertoPeriodo.toFixed(0)}%`}
-          hint={`${vencedoresPeriodo}/${totalPeriodo}`}
+          hint={`${vencedoresPeriodo}/${totalPeriodo} (take, stop e BE)`}
+          tone="info"
+        />
+        <StatCard
+          label="T.A. — só take e stop"
+          value={`${taxaAcertoSemBEPeriodo.toFixed(0)}%`}
+          hint={`${vencedoresPeriodo}/${decisivosPeriodo} (sem BE)`}
           tone="info"
         />
       </div>
