@@ -8,12 +8,9 @@ import {
 } from "@/lib/trades";
 import { calcularCurvaCapital } from "@/lib/capital";
 import { btnPrimary, btnSecondary, card, inputClass } from "@/lib/ui";
+import { DeleteButton } from "./DeleteButton";
 
 const selectClass = `${inputClass} px-2 py-1.5 text-sm`;
-
-function formatarMoeda(v: number) {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 type SearchParams = {
   mercado?: string;
@@ -138,7 +135,7 @@ export default async function TradesPage({
               <th className="px-4 py-2 font-medium">Mercado</th>
               <th className="px-4 py-2 font-medium text-right">R</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
-              <th className="px-4 py-2 font-medium text-right">Capital Acum.</th>
+              <th className="px-4 py-2 font-medium text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800/70">
@@ -173,8 +170,8 @@ export default async function TradesPage({
                     {TIPO_BADGE_LABEL[trade.resultado]}
                   </span>
                 </td>
-                <td className="px-4 py-2 text-right text-neutral-300">
-                  {formatarMoeda(trade.capitalAcumulado)}
+                <td className="px-4 py-2 text-right">
+                  <DeleteButton id={trade.id} compact />
                 </td>
               </tr>
             ))}

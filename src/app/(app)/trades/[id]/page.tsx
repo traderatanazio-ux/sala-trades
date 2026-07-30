@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatarR, MERCADO_LABEL, RESULTADO_LABEL, type Trade } from "@/lib/trades";
 import { updateTradeDetails } from "../actions";
 import { TradeFields } from "../TradeFields";
-import { DeleteButton } from "./DeleteButton";
+import { DeleteButton } from "../DeleteButton";
 import { btnSecondary, card } from "@/lib/ui";
 
 const RESULTADO_COLOR: Record<Trade["resultado"], string> = {
