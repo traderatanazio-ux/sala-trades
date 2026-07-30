@@ -119,8 +119,6 @@ export default async function DashboardPage({
   const capitalAtual = enriquecidos.length > 0 ? enriquecidos[enriquecidos.length - 1].capitalAcumulado : capitalInicial;
 
   // --- Métricas de conta inteira (sempre histórico completo) ---
-  const total = todos.length;
-  const rMedio = total > 0 ? todos.reduce((acc, t) => acc + t.resultado_r, 0) / total : 0;
   const decisivos = todos.filter((t) => t.resultado !== "breakeven");
   const rMedioSemBE =
     decisivos.length > 0
@@ -201,13 +199,12 @@ export default async function DashboardPage({
         <ResumoPeriodoCard label="Este mês" resumo={resumoMes} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard
           label="Retorno total"
           value={`${retornoTotalPct >= 0 ? "+" : ""}${retornoTotalPct.toFixed(1)}%`}
           tone={retornoTotalPct >= 0 ? "positive" : "negative"}
         />
-        <StatCard label="R:R médio — todos" value={`${rMedio.toFixed(2)}R`} />
         <StatCard label="R:R médio — só take/stop" value={`${rMedioSemBE.toFixed(2)}R`} />
         <StatCard
           label="Profit factor"
