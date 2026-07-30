@@ -126,6 +126,8 @@ export default async function DashboardPage({
       : 0;
   const retornoTotalPct =
     capitalInicial > 0 ? ((capitalAtual - capitalInicial) / capitalInicial) * 100 : 0;
+  const somaRTotal = todos.reduce((acc, t) => acc + t.resultado_r, 0);
+  const retornoSimplesPct = somaRTotal * riscoPct;
   const profitFactor = calcularProfitFactor(enriquecidos);
   const drawdown = calcularDrawdownMaximo(enriquecidos, capitalInicial);
 
@@ -199,11 +201,17 @@ export default async function DashboardPage({
         <ResumoPeriodoCard label="Este mês" resumo={resumoMes} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
-          label="Retorno total"
+          label="Retorno total (juros compostos)"
           value={`${retornoTotalPct >= 0 ? "+" : ""}${retornoTotalPct.toFixed(1)}%`}
           tone={retornoTotalPct >= 0 ? "positive" : "negative"}
+        />
+        <StatCard
+          label="Retorno total (sem compostos)"
+          value={`${retornoSimplesPct >= 0 ? "+" : ""}${retornoSimplesPct.toFixed(1)}%`}
+          hint={`${somaRTotal >= 0 ? "+" : ""}${somaRTotal.toFixed(1)}R × ${riscoPct}%`}
+          tone={retornoSimplesPct >= 0 ? "positive" : "negative"}
         />
         <StatCard label="R:R médio — só take/stop" value={`${rMedioSemBE.toFixed(2)}R`} />
         <StatCard

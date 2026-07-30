@@ -211,6 +211,21 @@ export default async function TradesPage({
           </tbody>
         </table>
       </div>
+
+      {(() => {
+        const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
+        const cor =
+          somaR > 0 ? "text-emerald-400" : somaR < 0 ? "text-red-400" : "text-neutral-300";
+        return (
+          <div className={`${card} p-4`}>
+            <p className="text-xs text-neutral-500">Soma total de R</p>
+            <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums ${cor}`}>
+              {somaR >= 0 ? "+" : ""}
+              {somaR.toFixed(1)}R
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
