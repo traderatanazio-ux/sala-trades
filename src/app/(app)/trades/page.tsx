@@ -175,9 +175,14 @@ export default async function TradesPage({
           <h1 className="text-lg font-semibold text-neutral-100">Trades</h1>
           <p className="text-xs text-neutral-500">{filtrados.length} trades</p>
         </div>
-        <Link href="/trades/novo" className={btnPrimary}>
-          Novo trade
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/trades/importar" className={btnSecondary}>
+            Importar em lote
+          </Link>
+          <Link href="/trades/novo" className={btnPrimary}>
+            Novo trade
+          </Link>
+        </div>
       </div>
 
       <form method="get" className={`flex flex-wrap items-end gap-3 ${card} p-4`}>

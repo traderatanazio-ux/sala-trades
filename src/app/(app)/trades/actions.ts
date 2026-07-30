@@ -24,15 +24,11 @@ async function getUserOrRedirect() {
   return { supabase, user };
 }
 
-async function uploadImageIfPresent(
+async function uploadFile(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  formData: FormData,
-  fieldName: string
-): Promise<string | undefined> {
-  const file = formData.get(fieldName);
-  if (!(file instanceof File) || file.size === 0) return undefined;
-
+  file: File
+): Promise<string> {
   const ext = file.name.split(".").pop() || "png";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
 
@@ -42,6 +38,17 @@ async function uploadImageIfPresent(
 
   if (error) throw new Error(`Falha ao enviar imagem: ${error.message}`);
   return path;
+}
+
+async function uploadImageIfPresent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  formData: FormData,
+  fieldName: string
+): Promise<string | undefined> {
+  const file = formData.get(fieldName);
+  if (!(file instanceof File) || file.size === 0) return undefined;
+  return uploadFile(supabase, userId, file);
 }
 
 export async function createTrade(formData: FormData) {
@@ -131,6 +138,56 @@ export async function updateTradeDetails(id: string, formData: FormData) {
   revalidatePath(`/trades/${id}`);
   revalidatePath("/dashboard");
   redirect(`/trades/${id}`);
+}
+
+export async function importarLote(formData: FormData) {
+  const { supabase, user } = await getUserOrRedirect();
+
+  const arquivos = formData
+    .getAll("prints")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+
+  if (arquivos.length === 0) {
+    throw new Error("Selecione pelo menos uma imagem para importar.");
+  }
+
+  const ordenados = [...arquivos].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
+  );
+
+  const pares: { antes: File; depois: File | null }[] = [];
+  for (let i = 0; i < ordenados.length; i += 2) {
+    pares.push({ antes: ordenados[i], depois: ordenados[i + 1] ?? null });
+  }
+
+  const hoje = new Date().toISOString();
+
+  await Promise.all(
+    pares.map(async (par) => {
+      const [print_antes_path, print_depois_path] = await Promise.all([
+        uploadFile(supabase, user.id, par.antes),
+        par.depois ? uploadFile(supabase, user.id, par.depois) : Promise.resolve(null),
+      ]);
+
+      const { error } = await supabase.from("trades").insert({
+        user_id: user.id,
+        ativo: "A DEFINIR",
+        mercado: "forex" as Mercado,
+        direcao: "compra" as Direcao,
+        data: hoje,
+        resultado_r: 0,
+        resultado: classificarResultado(0),
+        print_antes_path,
+        print_depois_path,
+      });
+
+      if (error) throw new Error(`Falha ao importar trade: ${error.message}`);
+    })
+  );
+
+  revalidatePath("/trades");
+  revalidatePath("/dashboard");
+  redirect("/trades?ativo=A+DEFINIR");
 }
 
 export async function deleteTrade(id: string) {
