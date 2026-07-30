@@ -25,6 +25,7 @@ import { ProjecaoCrescimento } from "./ProjecaoCrescimento";
 import { PeriodoFiltro } from "./PeriodoFiltro";
 import { ResumoPeriodoCard } from "./ResumoPeriodoCard";
 import { MercadoTable } from "./MercadoTable";
+import { AtivosTable } from "./AtivosTable";
 import { DiasStats } from "./DiasStats";
 import { HeatmapCalendario } from "./HeatmapCalendario";
 
@@ -185,6 +186,15 @@ export default async function DashboardPage({
     quantidade: noPeriodo.filter((t) => t.resultado === resultado).length,
   }));
 
+  const mesesDisponiveis = Array.from(
+    new Set(
+      enriquecidos.map((t) => {
+        const d = new Date(t.data);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      })
+    )
+  ).sort((a, b) => (a < b ? 1 : -1));
+
   // --- Regularidade diária: últimos 6 meses (independente do filtro) ---
   const seisMesesAtras = new Date(agora.getTime() - 182 * 24 * 60 * 60 * 1000);
   const trades6Meses = enriquecidos.filter((t) => new Date(t.data) >= seisMesesAtras);
@@ -229,7 +239,7 @@ export default async function DashboardPage({
 
       <ConfiguracaoCapitalForm capitalInicial={capitalInicial} riscoPct={riscoPct} />
 
-      <PeriodoFiltro periodo={periodo} de={de} ate={ate} />
+      <PeriodoFiltro periodo={periodo} de={de} ate={ate} meses={mesesDisponiveis} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total de trades (período)" value={String(totalPeriodo)} tone="info" />
@@ -266,6 +276,13 @@ export default async function DashboardPage({
           Resultado por mercado (período)
         </h2>
         <MercadoTable trades={noPeriodo} />
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-sm font-semibold text-neutral-100">
+          Ativos mais operados (período)
+        </h2>
+        <AtivosTable trades={noPeriodo} />
       </div>
 
       <div className={`${card} p-4`}>
