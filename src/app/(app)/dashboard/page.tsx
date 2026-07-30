@@ -119,18 +119,31 @@ export default async function DashboardPage({
   const enriquecidos = calcularCurvaCapital(todos, { capitalInicial, riscoPct });
   const capitalAtual = enriquecidos.length > 0 ? enriquecidos[enriquecidos.length - 1].capitalAcumulado : capitalInicial;
 
-  // --- Métricas de conta inteira (sempre histórico completo) ---
-  const decisivos = todos.filter((t) => t.resultado !== "breakeven");
+  // --- Métricas controladas pelo filtro de período/mês ---
+  const noPeriodo = filtrarPorPeriodo(enriquecidos, periodo, de, ate);
+
+  const primeiroDoPeriodo = noPeriodo[0];
+  const idxPrimeiroDoPeriodo = primeiroDoPeriodo
+    ? enriquecidos.findIndex((t) => t.id === primeiroDoPeriodo.id)
+    : -1;
+  const capitalAntesPeriodo =
+    idxPrimeiroDoPeriodo > 0 ? enriquecidos[idxPrimeiroDoPeriodo - 1].capitalAcumulado : capitalInicial;
+  const capitalDepoisPeriodo =
+    noPeriodo.length > 0 ? noPeriodo[noPeriodo.length - 1].capitalAcumulado : capitalAntesPeriodo;
+
+  const decisivosPeriodoArr = noPeriodo.filter((t) => t.resultado !== "breakeven");
   const rMedioSemBE =
-    decisivos.length > 0
-      ? decisivos.reduce((acc, t) => acc + t.resultado_r, 0) / decisivos.length
+    decisivosPeriodoArr.length > 0
+      ? decisivosPeriodoArr.reduce((acc, t) => acc + t.resultado_r, 0) / decisivosPeriodoArr.length
       : 0;
   const retornoTotalPct =
-    capitalInicial > 0 ? ((capitalAtual - capitalInicial) / capitalInicial) * 100 : 0;
-  const somaRTotal = todos.reduce((acc, t) => acc + t.resultado_r, 0);
-  const retornoSimplesPct = somaRTotal * riscoPct;
-  const profitFactor = calcularProfitFactor(enriquecidos);
-  const drawdown = calcularDrawdownMaximo(enriquecidos, capitalInicial);
+    capitalAntesPeriodo > 0
+      ? ((capitalDepoisPeriodo - capitalAntesPeriodo) / capitalAntesPeriodo) * 100
+      : 0;
+  const somaRPeriodo = noPeriodo.reduce((acc, t) => acc + t.resultado_r, 0);
+  const retornoSimplesPct = somaRPeriodo * riscoPct;
+  const profitFactor = calcularProfitFactor(noPeriodo);
+  const drawdown = calcularDrawdownMaximo(noPeriodo, capitalAntesPeriodo);
 
   const curvaData = [
     { label: "Início", capital: Number(capitalInicial.toFixed(2)) },
@@ -172,8 +185,6 @@ export default async function DashboardPage({
   const resumoSemana = resumoPeriodo(enriquecidos, inicioDaSemana(agora), fimHoje);
   const resumoMes = resumoPeriodo(enriquecidos, inicioDoMes(agora), fimHoje);
 
-  // --- Métricas controladas pelo filtro de período ---
-  const noPeriodo = filtrarPorPeriodo(enriquecidos, periodo, de, ate);
   const totalPeriodo = noPeriodo.length;
   const vencedoresPeriodo = noPeriodo.filter((t) => t.resultado === "positivo").length;
   const perdedoresPeriodo = noPeriodo.filter((t) => t.resultado === "negativo").length;
@@ -211,16 +222,20 @@ export default async function DashboardPage({
         <ResumoPeriodoCard label="Este mês" resumo={resumoMes} />
       </div>
 
+      <p className="-mb-2 text-xs text-neutral-500">
+        Refletem o período selecionado no filtro logo abaixo (padrão: histórico completo).
+      </p>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
-          label="Retorno total (juros compostos)"
+          label="Retorno (juros compostos)"
           value={`${retornoTotalPct >= 0 ? "+" : ""}${retornoTotalPct.toFixed(1)}%`}
           tone={retornoTotalPct >= 0 ? "positive" : "negative"}
         />
         <StatCard
-          label="Retorno total (sem compostos)"
+          label="Retorno (sem compostos)"
           value={`${retornoSimplesPct >= 0 ? "+" : ""}${retornoSimplesPct.toFixed(1)}%`}
-          hint={`${somaRTotal >= 0 ? "+" : ""}${somaRTotal.toFixed(1)}R × ${riscoPct}%`}
+          hint={`${somaRPeriodo >= 0 ? "+" : ""}${somaRPeriodo.toFixed(1)}R × ${riscoPct}%`}
           tone={retornoSimplesPct >= 0 ? "positive" : "negative"}
         />
         <StatCard label="R:R médio — só take/stop" value={`${rMedioSemBE.toFixed(2)}R`} />

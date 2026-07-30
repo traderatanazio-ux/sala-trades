@@ -95,9 +95,10 @@ export function PeriodoFiltro({
         Limpar
       </Link>
       <p className="w-full text-xs text-neutral-600">
-        Os campos De/Até só têm efeito com o período Personalizado. Este filtro afeta apenas
-        total de trades, taxa de acerto, distribuição e a tabela por mercado — a curva de
-        capital, profit factor, drawdown e projeção sempre consideram o histórico completo.
+        Os campos De/Até só têm efeito com o período Personalizado. Este filtro afeta o retorno,
+        R:R médio, profit factor, drawdown, total de trades, taxa de acerto, distribuição e as
+        tabelas por mercado e por ativo — a curva de capital (histórico completo), o gráfico de
+        mercado histórico e a projeção de crescimento continuam sempre com todos os trades.
       </p>
     </form>
   );
