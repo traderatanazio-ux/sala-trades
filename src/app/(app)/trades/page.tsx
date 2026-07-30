@@ -9,8 +9,18 @@ import {
 import { calcularCurvaCapital } from "@/lib/capital";
 import { btnPrimary, btnSecondary, card, inputClass } from "@/lib/ui";
 import { DeleteButton } from "./DeleteButton";
+import { PrintsButton } from "./PrintsButton";
 
 const selectClass = `${inputClass} px-2 py-1.5 text-sm`;
+
+async function signedUrl(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string | null
+) {
+  if (!path) return null;
+  const { data } = await supabase.storage.from("prints").createSignedUrl(path, 60 * 60);
+  return data?.signedUrl ?? null;
+}
 
 type SearchParams = {
   mercado?: string;
@@ -53,7 +63,15 @@ export default async function TradesPage({
     return true;
   });
 
-  const linhas = [...filtrados].reverse();
+  const linhas = await Promise.all(
+    [...filtrados].reverse().map(async (trade) => {
+      const [antesUrl, depoisUrl] = await Promise.all([
+        signedUrl(supabase, trade.print_antes_path),
+        signedUrl(supabase, trade.print_depois_path),
+      ]);
+      return { ...trade, antesUrl, depoisUrl };
+    })
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -135,6 +153,7 @@ export default async function TradesPage({
               <th className="px-4 py-2 font-medium">Mercado</th>
               <th className="px-4 py-2 font-medium text-right">R</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
+              <th className="px-4 py-2 font-medium">Prints</th>
               <th className="px-4 py-2 font-medium text-right">Ações</th>
             </tr>
           </thead>
@@ -170,6 +189,13 @@ export default async function TradesPage({
                     {TIPO_BADGE_LABEL[trade.resultado]}
                   </span>
                 </td>
+                <td className="px-4 py-2">
+                  <PrintsButton
+                    ativo={trade.ativo}
+                    antesUrl={trade.antesUrl}
+                    depoisUrl={trade.depoisUrl}
+                  />
+                </td>
                 <td className="px-4 py-2 text-right">
                   <DeleteButton id={trade.id} compact />
                 </td>
@@ -177,7 +203,7 @@ export default async function TradesPage({
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
                   Nenhum trade encontrado com esses filtros.
                 </td>
               </tr>
