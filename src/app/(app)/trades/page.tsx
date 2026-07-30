@@ -6,7 +6,7 @@ import {
   TIPO_BADGE_LABEL,
   type Trade,
 } from "@/lib/trades";
-import { calcularCurvaCapital } from "@/lib/capital";
+import { calcularCurvaCapital, type TradeComCapital } from "@/lib/capital";
 import { btnPrimary, btnSecondary, card, inputClass } from "@/lib/ui";
 import { DeleteButton } from "./DeleteButton";
 import { PrintsButton } from "./PrintsButton";
@@ -20,6 +20,85 @@ async function signedUrl(
   if (!path) return null;
   const { data } = await supabase.storage.from("prints").createSignedUrl(path, 60 * 60);
   return data?.signedUrl ?? null;
+}
+
+type LinhaTrade = TradeComCapital & { antesUrl: string | null; depoisUrl: string | null };
+
+function TradesTable({ trades }: { trades: LinhaTrade[] }) {
+  return (
+    <div className={`overflow-x-auto ${card}`}>
+      <table className="w-full text-sm">
+        <thead className="bg-neutral-900/95 text-left text-neutral-400">
+          <tr>
+            <th className="px-4 py-2 font-medium">#</th>
+            <th className="px-4 py-2 font-medium">Data</th>
+            <th className="px-4 py-2 font-medium">Ativo</th>
+            <th className="px-4 py-2 font-medium">Mercado</th>
+            <th className="px-4 py-2 font-medium text-right">R</th>
+            <th className="px-4 py-2 font-medium">Tipo</th>
+            <th className="px-4 py-2 font-medium">Prints</th>
+            <th className="px-4 py-2 font-medium text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-800/70">
+          {trades.map((trade, idx) => (
+            <tr key={trade.id} className="transition-colors hover:bg-neutral-800/40">
+              <td className="px-4 py-2 text-neutral-500">{trades.length - idx}</td>
+              <td className="px-4 py-2 text-neutral-300">
+                {new Date(trade.data).toLocaleDateString("pt-BR")}
+              </td>
+              <td className="px-4 py-2">
+                <Link href={`/trades/${trade.id}`} className="text-neutral-100 hover:underline">
+                  {trade.ativo}
+                </Link>
+              </td>
+              <td className="px-4 py-2 text-neutral-300">{MERCADO_LABEL[trade.mercado]}</td>
+              <td
+                className={`px-4 py-2 text-right font-medium ${
+                  trade.resultado_r > 0
+                    ? "text-emerald-400"
+                    : trade.resultado_r < 0
+                      ? "text-red-400"
+                      : "text-neutral-400"
+                }`}
+              >
+                {trade.resultado_r >= 0 ? "+" : ""}
+                {trade.resultado_r.toFixed(1)}R
+              </td>
+              <td className="px-4 py-2">
+                <span
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide ${TIPO_BADGE_CLASS[trade.resultado]}`}
+                >
+                  {TIPO_BADGE_LABEL[trade.resultado]}
+                </span>
+              </td>
+              <td className="px-4 py-2">
+                <PrintsButton
+                  ativo={trade.ativo}
+                  antesUrl={trade.antesUrl}
+                  depoisUrl={trade.depoisUrl}
+                />
+              </td>
+              <td className="px-4 py-2 text-right">
+                <DeleteButton id={trade.id} compact />
+              </td>
+            </tr>
+          ))}
+          {trades.length === 0 && (
+            <tr>
+              <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
+                Nenhum trade encontrado com esses filtros.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function capitalizar(texto: string) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 type SearchParams = {
@@ -63,7 +142,7 @@ export default async function TradesPage({
     return true;
   });
 
-  const linhas = await Promise.all(
+  const linhas: LinhaTrade[] = await Promise.all(
     [...filtrados].reverse().map(async (trade) => {
       const [antesUrl, depoisUrl] = await Promise.all([
         signedUrl(supabase, trade.print_antes_path),
@@ -72,6 +151,22 @@ export default async function TradesPage({
       return { ...trade, antesUrl, depoisUrl };
     })
   );
+
+  const gruposPorMes = new Map<string, LinhaTrade[]>();
+  for (const trade of linhas) {
+    const d = new Date(trade.data);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const grupo = gruposPorMes.get(chave);
+    if (grupo) grupo.push(trade);
+    else gruposPorMes.set(chave, [trade]);
+  }
+
+  const agora = new Date();
+  const chaveMesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`;
+
+  const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
+  const corSomaTotal =
+    somaR > 0 ? "text-emerald-400" : somaR < 0 ? "text-red-400" : "text-neutral-300";
 
   return (
     <div className="flex flex-col gap-6">
@@ -143,89 +238,53 @@ export default async function TradesPage({
         </p>
       )}
 
-      <div className={`overflow-x-auto ${card}`}>
-        <table className="w-full text-sm">
-          <thead className="bg-neutral-900/95 text-left text-neutral-400">
-            <tr>
-              <th className="px-4 py-2 font-medium">#</th>
-              <th className="px-4 py-2 font-medium">Data</th>
-              <th className="px-4 py-2 font-medium">Ativo</th>
-              <th className="px-4 py-2 font-medium">Mercado</th>
-              <th className="px-4 py-2 font-medium text-right">R</th>
-              <th className="px-4 py-2 font-medium">Tipo</th>
-              <th className="px-4 py-2 font-medium">Prints</th>
-              <th className="px-4 py-2 font-medium text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-800/70">
-            {linhas.map((trade, idx) => (
-              <tr key={trade.id} className="transition-colors hover:bg-neutral-800/40">
-                <td className="px-4 py-2 text-neutral-500">{linhas.length - idx}</td>
-                <td className="px-4 py-2 text-neutral-300">
-                  {new Date(trade.data).toLocaleDateString("pt-BR")}
-                </td>
-                <td className="px-4 py-2">
-                  <Link href={`/trades/${trade.id}`} className="text-neutral-100 hover:underline">
-                    {trade.ativo}
-                  </Link>
-                </td>
-                <td className="px-4 py-2 text-neutral-300">{MERCADO_LABEL[trade.mercado]}</td>
-                <td
-                  className={`px-4 py-2 text-right font-medium ${
-                    trade.resultado_r > 0
-                      ? "text-emerald-400"
-                      : trade.resultado_r < 0
-                        ? "text-red-400"
-                        : "text-neutral-400"
-                  }`}
-                >
-                  {trade.resultado_r >= 0 ? "+" : ""}
-                  {trade.resultado_r.toFixed(1)}R
-                </td>
-                <td className="px-4 py-2">
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide ${TIPO_BADGE_CLASS[trade.resultado]}`}
-                  >
-                    {TIPO_BADGE_LABEL[trade.resultado]}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  <PrintsButton
-                    ativo={trade.ativo}
-                    antesUrl={trade.antesUrl}
-                    depoisUrl={trade.depoisUrl}
-                  />
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <DeleteButton id={trade.id} compact />
-                </td>
-              </tr>
-            ))}
-            {linhas.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
-                  Nenhum trade encontrado com esses filtros.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {linhas.length === 0 ? (
+        <TradesTable trades={[]} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {Array.from(gruposPorMes.entries()).map(([chave, tradesDoMes]) => {
+            const [ano, mes] = chave.split("-").map(Number);
+            const label = capitalizar(
+              new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", {
+                month: "long",
+                year: "numeric",
+              })
+            );
+            const somaMes = tradesDoMes.reduce((acc, t) => acc + t.resultado_r, 0);
+            const corMes =
+              somaMes > 0 ? "text-emerald-400" : somaMes < 0 ? "text-red-400" : "text-neutral-400";
 
-      {(() => {
-        const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
-        const cor =
-          somaR > 0 ? "text-emerald-400" : somaR < 0 ? "text-red-400" : "text-neutral-300";
-        return (
-          <div className={`${card} p-4`}>
-            <p className="text-xs text-neutral-500">Soma total de R</p>
-            <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums ${cor}`}>
-              {somaR >= 0 ? "+" : ""}
-              {somaR.toFixed(1)}R
-            </p>
-          </div>
-        );
-      })()}
+            return (
+              <details key={chave} open={chave === chaveMesAtual} className={`${card} group`}>
+                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-500 transition group-open:rotate-90">▶</span>
+                    <span className="text-sm font-semibold text-neutral-100">{label}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-neutral-500">
+                    <span>{tradesDoMes.length} trades</span>
+                    <span className={`font-medium ${corMes}`}>
+                      {somaMes >= 0 ? "+" : ""}
+                      {somaMes.toFixed(1)}R
+                    </span>
+                  </div>
+                </summary>
+                <div className="border-t border-neutral-800/80 p-3">
+                  <TradesTable trades={tradesDoMes} />
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      )}
+
+      <div className={`${card} p-4`}>
+        <p className="text-xs text-neutral-500">Soma total de R</p>
+        <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums ${corSomaTotal}`}>
+          {somaR >= 0 ? "+" : ""}
+          {somaR.toFixed(1)}R
+        </p>
+      </div>
     </div>
   );
 }
