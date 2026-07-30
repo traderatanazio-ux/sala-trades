@@ -134,7 +134,6 @@ export default async function TradesPage({
             <tr>
               <th className="px-4 py-2 font-medium">#</th>
               <th className="px-4 py-2 font-medium">Data</th>
-              <th className="px-4 py-2 font-medium">Hora</th>
               <th className="px-4 py-2 font-medium">Ativo</th>
               <th className="px-4 py-2 font-medium">Mercado</th>
               <th className="px-4 py-2 font-medium text-right">R</th>
@@ -149,12 +148,6 @@ export default async function TradesPage({
                 <td className="px-4 py-2 text-neutral-500">{linhas.length - idx}</td>
                 <td className="px-4 py-2 text-neutral-300">
                   {new Date(trade.data).toLocaleDateString("pt-BR")}
-                </td>
-                <td className="px-4 py-2 text-neutral-300">
-                  {new Date(trade.data).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
                 </td>
                 <td className="px-4 py-2">
                   <Link href={`/trades/${trade.id}`} className="text-neutral-100 hover:underline">
@@ -199,7 +192,7 @@ export default async function TradesPage({
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
                   Nenhum trade encontrado com esses filtros.
                 </td>
               </tr>

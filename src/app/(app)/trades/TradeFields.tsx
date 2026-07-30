@@ -1,9 +1,9 @@
 import type { Trade } from "@/lib/trades";
 import { fileInputClass, inputClass, labelClass } from "@/lib/ui";
 
-function toLocalInput(value: string | null | undefined) {
-  if (!value) return new Date().toISOString().slice(0, 16);
-  return new Date(value).toISOString().slice(0, 16);
+function toDateInput(value: string | null | undefined) {
+  const d = value ? new Date(value) : new Date();
+  return d.toLocaleDateString("sv-SE"); // yyyy-MM-dd no fuso horário local
 }
 
 export function TradeFields({ trade }: { trade?: Trade }) {
@@ -63,9 +63,9 @@ export function TradeFields({ trade }: { trade?: Trade }) {
         <input
           id="data"
           name="data"
-          type="datetime-local"
+          type="date"
           required
-          defaultValue={toLocalInput(trade?.data)}
+          defaultValue={toDateInput(trade?.data)}
           className={inputClass}
         />
       </div>
