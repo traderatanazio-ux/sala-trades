@@ -4,7 +4,6 @@ import {
   calcularCurvaCapital,
   calcularDrawdownMaximo,
   calcularProfitFactor,
-  projetarCrescimento,
 } from "@/lib/capital";
 import {
   agruparPorDia,
@@ -21,7 +20,6 @@ import { CapitalCurveChart } from "./CapitalCurveChart";
 import { MercadoChart } from "./MercadoChart";
 import { TradesPorMesChart } from "./TradesPorMesChart";
 import { ConfiguracaoCapitalForm } from "./ConfiguracaoCapitalForm";
-import { ProjecaoCrescimento } from "./ProjecaoCrescimento";
 import { PeriodoFiltro } from "./PeriodoFiltro";
 import { ResumoPeriodoCard } from "./ResumoPeriodoCard";
 import { MercadoTable } from "./MercadoTable";
@@ -117,7 +115,6 @@ export default async function DashboardPage({
 
   const todos = trades ?? [];
   const enriquecidos = calcularCurvaCapital(todos, { capitalInicial, riscoPct });
-  const capitalAtual = enriquecidos.length > 0 ? enriquecidos[enriquecidos.length - 1].capitalAcumulado : capitalInicial;
 
   // --- Métricas controladas pelo filtro de período/mês ---
   const noPeriodo = filtrarPorPeriodo(enriquecidos, periodo, de, ate);
@@ -171,12 +168,6 @@ export default async function DashboardPage({
     porMes.set(chave, (porMes.get(chave) ?? 0) + 1);
   }
   const mesData = Array.from(porMes.entries()).map(([mes, quantidade]) => ({ mes, quantidade }));
-
-  const projecoes = {
-    1: projetarCrescimento(enriquecidos, riscoPct, capitalAtual, 1),
-    3: projetarCrescimento(enriquecidos, riscoPct, capitalAtual, 3),
-    6: projetarCrescimento(enriquecidos, riscoPct, capitalAtual, 6),
-  };
 
   // --- Resumo fixo: hoje / esta semana / este mês (independente do filtro) ---
   const agora = new Date();
@@ -333,8 +324,6 @@ export default async function DashboardPage({
 
       <DiasStats stats={diasStats} />
       <HeatmapCalendario porDia={porDia} />
-
-      <ProjecaoCrescimento projecoes={projecoes} />
     </div>
   );
 }

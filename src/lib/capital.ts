@@ -83,39 +83,3 @@ export function calcularDrawdownMaximo(
     fundoIdx: melhorFundoIdx,
   };
 }
-
-export type ProjecaoCrescimento = {
-  capitalProjetado: number;
-  lucroEstimado: number;
-  retornoPct: number;
-};
-
-export function projetarCrescimento(
-  enriquecidos: TradeComCapital[],
-  riscoPct: number,
-  capitalAtual: number,
-  meses: number
-): ProjecaoCrescimento {
-  if (enriquecidos.length < 2) {
-    return { capitalProjetado: capitalAtual, lucroEstimado: 0, retornoPct: 0 };
-  }
-
-  const primeira = new Date(enriquecidos[0].data).getTime();
-  const ultima = new Date(enriquecidos[enriquecidos.length - 1].data).getTime();
-  const diasCorridos = Math.max((ultima - primeira) / (1000 * 60 * 60 * 24), 1);
-  const tradesPorMes = enriquecidos.length / (diasCorridos / 30);
-
-  const avgResultadoR =
-    enriquecidos.reduce((acc, t) => acc + t.resultado_r, 0) / enriquecidos.length;
-  const retornoFracionarioPorTrade = avgResultadoR * (riscoPct / 100);
-
-  const numTradesProjetados = Math.round(tradesPorMes * meses);
-  const capitalProjetado =
-    capitalAtual * Math.pow(1 + retornoFracionarioPorTrade, numTradesProjetados);
-
-  return {
-    capitalProjetado,
-    lucroEstimado: capitalProjetado - capitalAtual,
-    retornoPct: capitalAtual > 0 ? (capitalProjetado / capitalAtual - 1) * 100 : 0,
-  };
-}
