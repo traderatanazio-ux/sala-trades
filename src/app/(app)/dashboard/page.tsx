@@ -131,10 +131,10 @@ export default async function DashboardPage({
   const capitalDepoisPeriodo =
     noPeriodo.length > 0 ? noPeriodo[noPeriodo.length - 1].capitalAcumulado : capitalAntesPeriodo;
 
-  const decisivosPeriodoArr = noPeriodo.filter((t) => t.resultado !== "breakeven");
-  const rMedioSemBE =
-    decisivosPeriodoArr.length > 0
-      ? decisivosPeriodoArr.reduce((acc, t) => acc + t.resultado_r, 0) / decisivosPeriodoArr.length
+  const ganhosPeriodoArr = noPeriodo.filter((t) => t.resultado === "positivo");
+  const rMedioGanhos =
+    ganhosPeriodoArr.length > 0
+      ? ganhosPeriodoArr.reduce((acc, t) => acc + t.resultado_r, 0) / ganhosPeriodoArr.length
       : 0;
   const retornoTotalPct =
     capitalAntesPeriodo > 0
@@ -238,7 +238,12 @@ export default async function DashboardPage({
           hint={`${somaRPeriodo >= 0 ? "+" : ""}${somaRPeriodo.toFixed(1)}R × ${riscoPct}%`}
           tone={retornoSimplesPct >= 0 ? "positive" : "negative"}
         />
-        <StatCard label="R:R médio — só take/stop" value={`${rMedioSemBE.toFixed(2)}R`} />
+        <StatCard
+          label="R médio dos ganhos"
+          value={`${rMedioGanhos.toFixed(2)}R`}
+          hint={`${ganhosPeriodoArr.length} trades vencedores`}
+          tone="positive"
+        />
         <StatCard
           label="Profit factor"
           value={profitFactor === Infinity ? "∞" : profitFactor.toFixed(2)}
