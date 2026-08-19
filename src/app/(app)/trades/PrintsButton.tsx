@@ -34,7 +34,7 @@ export function PrintsButton({
       onClick={() => setAberto(false)}
     >
       <div
-        className="max-w-3xl rounded-xl border border-neutral-800 bg-neutral-900 p-4 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-900 p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-6">
@@ -47,7 +47,7 @@ export function PrintsButton({
             Fechar
           </button>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {antesUrl && (
             <div>
               <p className="mb-1 text-xs text-neutral-500">Antes</p>
@@ -55,10 +55,10 @@ export function PrintsButton({
                 <Image
                   src={antesUrl}
                   alt="Print de antes"
-                  width={500}
-                  height={281}
+                  width={900}
+                  height={506}
                   unoptimized
-                  className="rounded-lg border border-neutral-800 object-cover"
+                  className="h-auto w-full rounded-lg border border-neutral-800 object-cover"
                 />
               </a>
             </div>
@@ -70,10 +70,10 @@ export function PrintsButton({
                 <Image
                   src={depoisUrl}
                   alt="Print de depois"
-                  width={500}
-                  height={281}
+                  width={900}
+                  height={506}
                   unoptimized
-                  className="rounded-lg border border-neutral-800 object-cover"
+                  className="h-auto w-full rounded-lg border border-neutral-800 object-cover"
                 />
               </a>
             </div>
