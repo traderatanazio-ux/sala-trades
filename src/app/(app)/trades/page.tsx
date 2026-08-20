@@ -13,7 +13,12 @@ import { DeleteButton } from "./DeleteButton";
 import { PrintsButton } from "./PrintsButton";
 
 const selectClass = `${inputClass} px-2 py-1.5 text-sm`;
-const MERCADOS_ORDEM: Mercado[] = ["b3", "cripto", "forex"];
+
+type GrupoMercado = { chave: string; label: string; mercados: Mercado[] };
+const GRUPOS_MERCADO: GrupoMercado[] = [
+  { chave: "b3", label: "B3", mercados: ["b3"] },
+  { chave: "cripto-forex", label: "Cripto / Forex", mercados: ["cripto", "forex"] },
+];
 
 async function signedUrl(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -175,9 +180,9 @@ export default async function TradesPage({
 
   const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
 
-  const mercadosVisiveis = filters.mercado
-    ? MERCADOS_ORDEM.filter((m) => m === filters.mercado)
-    : MERCADOS_ORDEM;
+  const gruposVisiveis = filters.mercado
+    ? GRUPOS_MERCADO.filter((g) => g.mercados.includes(filters.mercado as Mercado))
+    : GRUPOS_MERCADO;
 
   return (
     <div className="flex flex-col gap-6">
@@ -255,19 +260,17 @@ export default async function TradesPage({
       )}
 
       <div className="flex flex-col gap-3">
-        {mercadosVisiveis.map((mercado) => {
-          const tradesDoMercado = linhas.filter((t) => t.mercado === mercado);
+        {gruposVisiveis.map((grupo) => {
+          const tradesDoMercado = linhas.filter((t) => grupo.mercados.includes(t.mercado));
           const somaMercado = tradesDoMercado.reduce((acc, t) => acc + t.resultado_r, 0);
           const gruposPorMes = agruparPorMes(tradesDoMercado);
 
           return (
-            <details key={mercado} open className={`${card} group`}>
+            <details key={grupo.chave} open className={`${card} group`}>
               <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
                 <div className="flex items-center gap-2">
                   <span className="text-neutral-500 transition group-open:rotate-90">▶</span>
-                  <span className="text-sm font-semibold text-neutral-100">
-                    {MERCADO_LABEL[mercado]}
-                  </span>
+                  <span className="text-sm font-semibold text-neutral-100">{grupo.label}</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-neutral-500">
                   <span>{tradesDoMercado.length} trades</span>
