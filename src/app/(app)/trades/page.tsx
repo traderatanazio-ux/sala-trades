@@ -4,6 +4,7 @@ import {
   MERCADO_LABEL,
   TIPO_BADGE_CLASS,
   TIPO_BADGE_LABEL,
+  type Mercado,
   type Trade,
 } from "@/lib/trades";
 import { calcularCurvaCapital, type TradeComCapital } from "@/lib/capital";
@@ -12,6 +13,7 @@ import { DeleteButton } from "./DeleteButton";
 import { PrintsButton } from "./PrintsButton";
 
 const selectClass = `${inputClass} px-2 py-1.5 text-sm`;
+const MERCADOS_ORDEM: Mercado[] = ["b3", "cripto", "forex"];
 
 async function signedUrl(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -101,6 +103,22 @@ function capitalizar(texto: string) {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
+function agruparPorMes(trades: LinhaTrade[]) {
+  const grupos = new Map<string, LinhaTrade[]>();
+  for (const trade of trades) {
+    const d = new Date(trade.data);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const grupo = grupos.get(chave);
+    if (grupo) grupo.push(trade);
+    else grupos.set(chave, [trade]);
+  }
+  return grupos;
+}
+
+function corResultado(soma: number) {
+  return soma > 0 ? "text-emerald-400" : soma < 0 ? "text-red-400" : "text-neutral-400";
+}
+
 type SearchParams = {
   mercado?: string;
   resultado?: string;
@@ -152,21 +170,14 @@ export default async function TradesPage({
     })
   );
 
-  const gruposPorMes = new Map<string, LinhaTrade[]>();
-  for (const trade of linhas) {
-    const d = new Date(trade.data);
-    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const grupo = gruposPorMes.get(chave);
-    if (grupo) grupo.push(trade);
-    else gruposPorMes.set(chave, [trade]);
-  }
-
   const agora = new Date();
   const chaveMesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`;
 
   const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
-  const corSomaTotal =
-    somaR > 0 ? "text-emerald-400" : somaR < 0 ? "text-red-400" : "text-neutral-300";
+
+  const mercadosVisiveis = filters.mercado
+    ? MERCADOS_ORDEM.filter((m) => m === filters.mercado)
+    : MERCADOS_ORDEM;
 
   return (
     <div className="flex flex-col gap-6">
@@ -243,49 +254,84 @@ export default async function TradesPage({
         </p>
       )}
 
-      {linhas.length === 0 ? (
-        <TradesTable trades={[]} />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {Array.from(gruposPorMes.entries()).map(([chave, tradesDoMes]) => {
-            const [ano, mes] = chave.split("-").map(Number);
-            const label = capitalizar(
-              new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", {
-                month: "long",
-                year: "numeric",
-              })
-            );
-            const somaMes = tradesDoMes.reduce((acc, t) => acc + t.resultado_r, 0);
-            const corMes =
-              somaMes > 0 ? "text-emerald-400" : somaMes < 0 ? "text-red-400" : "text-neutral-400";
+      <div className="flex flex-col gap-3">
+        {mercadosVisiveis.map((mercado) => {
+          const tradesDoMercado = linhas.filter((t) => t.mercado === mercado);
+          const somaMercado = tradesDoMercado.reduce((acc, t) => acc + t.resultado_r, 0);
+          const gruposPorMes = agruparPorMes(tradesDoMercado);
 
-            return (
-              <details key={chave} open={chave === chaveMesAtual} className={`${card} group`}>
-                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
-                  <div className="flex items-center gap-2">
-                    <span className="text-neutral-500 transition group-open:rotate-90">▶</span>
-                    <span className="text-sm font-semibold text-neutral-100">{label}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-neutral-500">
-                    <span>{tradesDoMes.length} trades</span>
-                    <span className={`font-medium ${corMes}`}>
-                      {somaMes >= 0 ? "+" : ""}
-                      {somaMes.toFixed(1)}R
-                    </span>
-                  </div>
-                </summary>
-                <div className="border-t border-neutral-800/80 p-3">
-                  <TradesTable trades={tradesDoMes} />
+          return (
+            <details key={mercado} open className={`${card} group`}>
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-500 transition group-open:rotate-90">▶</span>
+                  <span className="text-sm font-semibold text-neutral-100">
+                    {MERCADO_LABEL[mercado]}
+                  </span>
                 </div>
-              </details>
-            );
-          })}
-        </div>
-      )}
+                <div className="flex items-center gap-4 text-xs text-neutral-500">
+                  <span>{tradesDoMercado.length} trades</span>
+                  <span className={`font-medium ${corResultado(somaMercado)}`}>
+                    {somaMercado >= 0 ? "+" : ""}
+                    {somaMercado.toFixed(1)}R
+                  </span>
+                </div>
+              </summary>
+              <div className="flex flex-col gap-3 border-t border-neutral-800/80 p-3">
+                {tradesDoMercado.length === 0 ? (
+                  <p className="px-1 py-2 text-sm text-neutral-500">
+                    Nenhum trade neste mercado ainda.
+                  </p>
+                ) : (
+                  Array.from(gruposPorMes.entries()).map(([chave, tradesDoMes]) => {
+                    const [ano, mes] = chave.split("-").map(Number);
+                    const label = capitalizar(
+                      new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", {
+                        month: "long",
+                        year: "numeric",
+                      })
+                    );
+                    const somaMes = tradesDoMes.reduce((acc, t) => acc + t.resultado_r, 0);
+
+                    return (
+                      <details
+                        key={chave}
+                        open={chave === chaveMesAtual}
+                        className={`${card} group`}
+                      >
+                        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
+                          <div className="flex items-center gap-2">
+                            <span className="text-neutral-500 transition group-open:rotate-90">
+                              ▶
+                            </span>
+                            <span className="text-sm font-semibold text-neutral-100">
+                              {label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-neutral-500">
+                            <span>{tradesDoMes.length} trades</span>
+                            <span className={`font-medium ${corResultado(somaMes)}`}>
+                              {somaMes >= 0 ? "+" : ""}
+                              {somaMes.toFixed(1)}R
+                            </span>
+                          </div>
+                        </summary>
+                        <div className="border-t border-neutral-800/80 p-3">
+                          <TradesTable trades={tradesDoMes} />
+                        </div>
+                      </details>
+                    );
+                  })
+                )}
+              </div>
+            </details>
+          );
+        })}
+      </div>
 
       <div className={`${card} p-4`}>
         <p className="text-xs text-neutral-500">Soma total de R</p>
-        <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums ${corSomaTotal}`}>
+        <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums ${corResultado(somaR)}`}>
           {somaR >= 0 ? "+" : ""}
           {somaR.toFixed(1)}R
         </p>

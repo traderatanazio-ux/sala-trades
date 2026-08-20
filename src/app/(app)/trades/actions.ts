@@ -72,28 +72,26 @@ export async function createTrade(formData: FormData) {
     "print_depois"
   );
 
-  const { data, error } = await supabase
-    .from("trades")
-    .insert({
-      user_id: user.id,
-      ativo: String(formData.get("ativo") ?? "").toUpperCase(),
-      mercado: formData.get("mercado") as Mercado,
-      direcao: formData.get("direcao") as Direcao,
-      data: String(formData.get("data") || new Date().toISOString()),
-      resultado_r,
-      resultado: classificarResultado(resultado_r),
-      observacoes: (formData.get("observacoes") as string) || null,
-      print_antes_path,
-      print_depois_path,
-    })
-    .select("id")
-    .single();
+  const mercado = formData.get("mercado") as Mercado;
+
+  const { error } = await supabase.from("trades").insert({
+    user_id: user.id,
+    ativo: String(formData.get("ativo") ?? "").toUpperCase(),
+    mercado,
+    direcao: formData.get("direcao") as Direcao,
+    data: String(formData.get("data") || new Date().toISOString()),
+    resultado_r,
+    resultado: classificarResultado(resultado_r),
+    observacoes: (formData.get("observacoes") as string) || null,
+    print_antes_path,
+    print_depois_path,
+  });
 
   if (error) throw new Error(`Falha ao criar trade: ${error.message}`);
 
   revalidatePath("/trades");
   revalidatePath("/dashboard");
-  redirect(`/trades/${data.id}`);
+  redirect(`/trades?mercado=${mercado}`);
 }
 
 export async function updateTradeDetails(id: string, formData: FormData) {
