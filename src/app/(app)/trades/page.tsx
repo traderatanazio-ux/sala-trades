@@ -20,6 +20,13 @@ const GRUPOS_MERCADO: GrupoMercado[] = [
   { chave: "cripto-forex", label: "Cripto / Forex", mercados: ["cripto", "forex"] },
 ];
 
+function grupoDoFiltro(valor?: string) {
+  if (!valor) return undefined;
+  return GRUPOS_MERCADO.find(
+    (g) => g.chave === valor || g.mercados.includes(valor as Mercado)
+  );
+}
+
 async function signedUrl(
   supabase: Awaited<ReturnType<typeof createClient>>,
   path: string | null
@@ -138,6 +145,7 @@ export default async function TradesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const filters = await searchParams;
+  const grupoFiltro = grupoDoFiltro(filters.mercado);
   const supabase = await createClient();
   const {
     data: { user },
@@ -157,7 +165,7 @@ export default async function TradesPage({
   const enriquecidos = calcularCurvaCapital(trades ?? [], { capitalInicial, riscoPct });
 
   const filtrados = enriquecidos.filter((t) => {
-    if (filters.mercado && t.mercado !== filters.mercado) return false;
+    if (grupoFiltro && !grupoFiltro.mercados.includes(t.mercado)) return false;
     if (filters.resultado && t.resultado !== filters.resultado) return false;
     if (filters.ativo && !t.ativo.toLowerCase().includes(filters.ativo.toLowerCase())) return false;
     if (filters.de && new Date(t.data) < new Date(filters.de)) return false;
@@ -180,9 +188,7 @@ export default async function TradesPage({
 
   const somaR = filtrados.reduce((acc, t) => acc + t.resultado_r, 0);
 
-  const gruposVisiveis = filters.mercado
-    ? GRUPOS_MERCADO.filter((g) => g.mercados.includes(filters.mercado as Mercado))
-    : GRUPOS_MERCADO;
+  const gruposVisiveis = grupoFiltro ? [grupoFiltro] : GRUPOS_MERCADO;
 
   return (
     <div className="flex flex-col gap-6">
@@ -214,11 +220,10 @@ export default async function TradesPage({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500">Mercado</label>
-          <select name="mercado" defaultValue={filters.mercado ?? ""} className={selectClass}>
+          <select name="mercado" defaultValue={grupoFiltro?.chave ?? ""} className={selectClass}>
             <option value="">Todos</option>
             <option value="b3">B3</option>
-            <option value="cripto">Cripto</option>
-            <option value="forex">Forex</option>
+            <option value="cripto-forex">Cripto / Forex</option>
           </select>
         </div>
 

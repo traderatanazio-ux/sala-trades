@@ -91,7 +91,7 @@ export async function createTrade(formData: FormData) {
 
   revalidatePath("/trades");
   revalidatePath("/dashboard");
-  redirect(`/trades?mercado=${mercado}`);
+  redirect(`/trades?mercado=${mercado === "b3" ? "b3" : "cripto-forex"}`);
 }
 
 export async function updateTradeDetails(id: string, formData: FormData) {
