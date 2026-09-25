@@ -27,10 +27,13 @@ export function ResumoPeriodoCard({
       </p>
       {resumo.quantidade > 0 && (
         <p className="mt-0.5 text-xs text-neutral-500">
-          {resumo.ganhos} {resumo.ganhos === 1 ? "ganho" : "ganhos"}, {resumo.perdas}{" "}
-          {resumo.perdas === 1 ? "perda" : "perdas"} e {resumo.breakeven} breakeven
+          {resumo.ganhos} {resumo.ganhos === 1 ? "ganho" : "ganhos"} e {resumo.perdas}{" "}
+          {resumo.perdas === 1 ? "perda" : "perdas"}
         </p>
       )}
+      <p className="mt-2 text-xs text-amber-400">
+        Zero a zero: <span className="font-semibold tabular-nums">{resumo.breakeven}</span>
+      </p>
     </div>
   );
 }

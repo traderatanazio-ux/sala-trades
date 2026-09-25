@@ -267,6 +267,11 @@ export default async function DashboardPage({
           hint={`${vencedoresPeriodo}/${decisivosPeriodo} (sem BE)`}
           tone="info"
         />
+        <StatCard
+          label="Zero a zero (período)"
+          value={String(totalPeriodo - decisivosPeriodo)}
+          hint={`de ${totalPeriodo} trades`}
+        />
       </div>
 
       <div className={`${card} p-4`}>
