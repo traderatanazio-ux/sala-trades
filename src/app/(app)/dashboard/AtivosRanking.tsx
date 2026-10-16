@@ -9,6 +9,11 @@ type LinhaAtivo = {
   resultadoR: number;
 };
 
+function taxaAcerto(linha: LinhaAtivo) {
+  const decisivos = linha.take + linha.stop;
+  return decisivos > 0 ? `${Math.round((linha.take / decisivos) * 100)}%` : "—";
+}
+
 function Coluna({
   titulo,
   linhas,
@@ -37,7 +42,7 @@ function Coluna({
                   <p className="text-sm font-semibold text-neutral-100">{linha.ativo}</p>
                   <p className="text-xs text-neutral-500">
                     {linha.trades} {linha.trades === 1 ? "trade" : "trades"} · {linha.take} take ·{" "}
-                    {linha.stop} stop
+                    {linha.stop} stop · T.A. {taxaAcerto(linha)}
                   </p>
                 </div>
               </div>
