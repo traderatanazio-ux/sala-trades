@@ -24,6 +24,7 @@ import { PeriodoFiltro } from "./PeriodoFiltro";
 import { ResumoPeriodoCard } from "./ResumoPeriodoCard";
 import { MercadoTable } from "./MercadoTable";
 import { AtivosTable } from "./AtivosTable";
+import { AtivosRanking } from "./AtivosRanking";
 import { DiaSemanaTable } from "./DiaSemanaTable";
 import { DiasStats } from "./DiasStats";
 import { HeatmapCalendario } from "./HeatmapCalendario";
@@ -299,7 +300,10 @@ export default async function DashboardPage({
         <h2 className="mb-2 text-sm font-semibold text-neutral-100">
           Ativos mais operados (período)
         </h2>
-        <AtivosTable trades={noPeriodo} />
+        <div className="flex flex-col gap-4">
+          <AtivosRanking trades={noPeriodo} />
+          <AtivosTable trades={noPeriodo} />
+        </div>
       </div>
 
       <div>
